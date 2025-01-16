@@ -23,7 +23,7 @@ def new_identity_session(base_url, username, password, app_id):
     access_token = response.json()["access_token"]
     headers["Authorization"] = f"Bearer {access_token}"
 
-def new_identity_user(username, pw):
+def new_identity_user(username, pw, orgpath=None):
     uri = f"{url}/CDirectoryService/CreateUser"
 
     body = {
@@ -34,7 +34,8 @@ def new_identity_user(username, pw):
         "ConfirmPassword": pw,
         "MFA": False,
         "PasswordNeverExpire": True,
-        "ForcePasswordChangeNext": False
+        "ForcePasswordChangeNext": False,
+        "OrgPath": orgpath
     }
 
     response = requests.post(uri, headers=headers, json=body)
@@ -93,8 +94,57 @@ def reset_identity_password(uid, new_password):
     response = requests.post(uri, headers=headers, json=body)
 
     if response.json()["success"]:
-s        result = "Password Reset"
+        result = "Password Reset"
     else:
         result = f"Unable to Reset Password for {uid}"
+
+    return result
+
+def create_organization(org_name, org_desc=None):
+    uri = f"{url}/Org/Create"
+
+    body = {
+        "Name": org_name,
+        "Description": org_desc
+    }
+
+    response = requests.post(uri, headers=headers, json=body)
+    
+    if response.json()["success"]:
+        result = response.json()
+    else:
+        result = f"Unable to create organization {org_name}"
+
+    return result
+
+def delete_organization(org_id):
+    uri = f"{url}/Org/Delete"
+
+    body = {
+        "OrgId": org_id
+    }
+
+    response = requests.post(uri, headers=headers, json=body)
+    
+    if response.json()["success"]:
+        result = f"Organization {org_id} deleted successfully"
+    else:
+        result = f"Unable to delete organization {org_id}"
+
+    return result
+
+def get_organization(org_id):
+    uri = f"{url}/Org/Get"
+
+    body = {
+        "OrgId": org_id
+    }
+
+    response = requests.get(uri, headers=headers, json=body)
+    
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = f"Unable to retrieve organization {org_id}"
 
     return result
