@@ -111,11 +111,11 @@ def create_organization(org_name, org_desc=None):
     response = requests.post(uri, headers=headers, json=body)
     
     if response.json()["success"]:
-        result = response.json()
+        result = response.json()["Result"]
     else:
         result = f"Unable to create organization {org_name}"
 
-    return result
+    return result['ID']
 
 def delete_organization(org_id):
     uri = f"{url}/Org/Delete"
@@ -146,5 +146,104 @@ def get_organization(org_id):
         result = response.json()["Result"]
     else:
         result = f"Unable to retrieve organization {org_id}"
+
+    return result
+
+def get_organizations():
+    uri = f"{url}/Org/ListAll"
+    response = requests.get(uri, headers=headers)
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = "Unable to retrieve organizations"
+    return result
+
+def get_organization_roles(org_id):
+    uri = f"{url}/Org/GetRoles"
+    body = {
+        "OrgId": org_id
+    }
+    response = requests.post(uri, headers=headers, json=body)
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = "Unable to retrieve roles"
+    return result
+
+def update_org_admins(org_id, uid):
+    uri = f"{url}/Org/UpdateAdministrators"
+    body = {
+        "Grant": [
+            {
+            "Id": uid,
+            "Type": "User"
+            }
+        ],
+        "OrgId": org_id
+    }
+    response = requests.post(uri, headers=headers, json=body)
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = "Unable to update org admins"
+    return result
+
+def create_role(role_name, orgpath):
+    uri = f"{url}/Roles/StoreRole"
+
+    body = {
+        "Name": role_name,
+        "Description": "{role_name} Description",
+        "RoleType": "PrincipalList",
+        "OrgPath": orgpath,
+    }
+
+    response = requests.post(uri, headers=headers, json=body)
+    
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = f"Unable to create role {role_name}"
+
+    return result["_RowKey"]
+
+def assign_role_adminrights(role_id, path):
+    uri = f"{url}/Roles/AssignSuperRights"
+    body = [{
+        "Role": role_id,
+        "Path": path
+    }]
+    response = requests.post(uri, headers=headers, json=body)
+    if response.json()["success"]:
+        print(f"Role {role_id} assigned admin rights to {path}")
+    else:
+        print(f"Unable to assign admin rights to {role_id} for {path}")
+    return response.json()
+
+def get_role(role_id):
+    uri = f"{url}/Roles/GetRole?Name={role_id}"
+
+    response = requests.post(uri, headers=headers)
+    
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = "Unable to retrieve roles"
+
+    return result
+
+def identity_query(script):
+    uri= f"{url}/Redrock/query"
+
+    body = {
+        "Script": script
+    }
+
+    response = requests.post(uri, headers=headers, json=body)
+    
+    if response.json()["success"]:
+        result = response.json()["Result"]
+    else:
+        result = "Unable to retrieve query results"
 
     return result
