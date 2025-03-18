@@ -72,6 +72,51 @@ Retrieves details of an organization.
 
 - `org_id`: The organization ID.
 
+### `get_organizations()`
+
+Retrieves a list of all organizations.
+
+- Returns: A list of organizations.
+
+### `get_organization_roles(org_id)`
+
+Retrieves roles associated with a specific organization.
+
+- `org_id`: The organization ID.
+
+### `update_org_admins(org_id, uid)`
+
+Updates the administrators of an organization.
+
+- `org_id`: The organization ID.
+- `uid`: The user ID to be granted admin rights.
+
+### `create_role(role_name, orgpath)`
+
+Creates a new role within an organization.
+
+- `role_name`: The name of the role.
+- `orgpath`: The organizational path where the role will be created.
+
+### `assign_role_adminrights(role_id, path)`
+
+Assigns administrative rights to a role for a specific path.
+
+- `role_id`: The role ID.
+- `path`: The path to assign admin rights.
+
+### `get_role(role_id)`
+
+Retrieves details of a specific role.
+
+- `role_id`: The role ID.
+
+### `identity_query(script)`
+
+Executes a custom query against the CyberArk Identity API.
+
+- `script`: The query script to execute.
+
 ## Running Tests
 
 To run the test cases, execute the `test.py` script:
