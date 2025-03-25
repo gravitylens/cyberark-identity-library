@@ -72,50 +72,19 @@ Retrieves details of an organization.
 
 - `org_id`: The organization ID.
 
-### `get_organizations()`
+### `generate_unique_password(length=12, min_lowercase=2, max_lowercase=None, min_uppercase=2, max_uppercase=None, min_special=0, max_special=None, disallowed_chars="")`
 
-Retrieves a list of all organizations.
+Generates a unique password with a mix of letters, digits, and special characters.
 
-- Returns: A list of organizations.
-
-### `get_organization_roles(org_id)`
-
-Retrieves roles associated with a specific organization.
-
-- `org_id`: The organization ID.
-
-### `update_org_admins(org_id, uid)`
-
-Updates the administrators of an organization.
-
-- `org_id`: The organization ID.
-- `uid`: The user ID to be granted admin rights.
-
-### `create_role(role_name, orgpath)`
-
-Creates a new role within an organization.
-
-- `role_name`: The name of the role.
-- `orgpath`: The organizational path where the role will be created.
-
-### `assign_role_adminrights(role_id, path)`
-
-Assigns administrative rights to a role for a specific path.
-
-- `role_id`: The role ID.
-- `path`: The path to assign admin rights.
-
-### `get_role(role_id)`
-
-Retrieves details of a specific role.
-
-- `role_id`: The role ID.
-
-### `identity_query(script)`
-
-Executes a custom query against the CyberArk Identity API.
-
-- `script`: The query script to execute.
+- `length`: (Optional) The total length of the password. Default is 12. Must be at least the sum of `min_lowercase`, `min_uppercase`, and `min_special`.
+- `min_lowercase`: (Optional) Minimum number of lowercase letters. Default is 2.
+- `max_lowercase`: (Optional) Maximum number of lowercase letters. Default is None (no limit). If set to 0, no lowercase letters will be included.
+- `min_uppercase`: (Optional) Minimum number of uppercase letters. Default is 2.
+- `max_uppercase`: (Optional) Maximum number of uppercase letters. Default is None (no limit). If set to 0, no uppercase letters will be included.
+- `min_special`: (Optional) Minimum number of special characters. Default is 0.
+- `max_special`: (Optional) Maximum number of special characters. Default is None (no limit). If set to 0, no special characters will be included.
+- `disallowed_chars`: (Optional) A string of characters that should not be included in the password. Default is an empty string.
+- Returns: A unique password string.
 
 ## Running Tests
 
