@@ -30,11 +30,3 @@ app_id = os.getenv("appid")
 new_identity_session(base_url, username, password, app_id)
 print("new_identity_session: Success")
 
-for i in range(250):
-    username = f"vi{str(i).zfill(3)}@impact2025.com"
-    password = generate_unique_password(length=8,max_special=0,disallowed_chars="1iIlLoO0|")
-    
-    #add to group "Venafi Impact Users"
-
-    
-
