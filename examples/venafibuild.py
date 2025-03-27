@@ -19,6 +19,7 @@ from identity import (
     generate_unique_password
 )
 from dotenv import load_dotenv
+import csv
     
 load_dotenv()
 
@@ -29,4 +30,22 @@ password = os.getenv("identitypw")
 app_id = os.getenv("appid")
 new_identity_session(base_url, username, password, app_id)
 print("new_identity_session: Success")
+
+# Open CSV file for logging
+with open("venafi_out.csv", mode="w", newline="") as csvfile:
+    csv_writer = csv.writer(csvfile)
+    # Write header row
+    csv_writer.writerow(["username", "password"])
+
+    for i in range(250):
+        username = f"vi{str(i).zfill(3)}@impact2025.com"
+        password = generate_unique_password(length=8, max_special=0, disallowed_chars="1iIlLoO0|")
+        
+        # Log variables to CSV
+        csv_writer.writerow([username, password])
+        
+        # TODO: Add logic to create the user and assign them to the group
+        print(f"Logged: {username}, {password}")
+
+
 
