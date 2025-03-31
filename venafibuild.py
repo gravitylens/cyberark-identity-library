@@ -20,7 +20,8 @@ from identity import (
 )
 from dotenv import load_dotenv
 import csv
-    
+import time
+
 load_dotenv()
 
 #Login to Identity
@@ -30,6 +31,7 @@ password = os.getenv("identitypw")
 app_id = os.getenv("appid")
 new_identity_session(base_url, username, password, app_id)
 print("new_identity_session: Success")
+roleid = create_role("Venafi Impact users", None)
 
 # Open CSV file for logging
 with open("venafi_out.csv", mode="w", newline="") as csvfile:
@@ -44,8 +46,7 @@ with open("venafi_out.csv", mode="w", newline="") as csvfile:
         # Log variables to CSV
         csv_writer.writerow([username, password])
         
-        # TODO: Add logic to create the user and assign them to the group
-        print(f"Logged: {username}, {password}")
-
-
+        uid = new_identity_user(username, password)
+        time.sleep(1)
+        add_user_to_role(uid, roleid)
 

@@ -40,10 +40,10 @@ with open("identity_out.csv", mode="w", newline="") as csvfile:
 
     # Loop to create a new organization, role, and users
     for i in range(250):
-        orgpath = f"Org{str(i).zfill(3)}"
+        orgpath = f"Impact{str(i).zfill(3)}"
         adminusername = f"admin{str(i).zfill(3)}@impact2025.com"
         adminpassword = generate_unique_password(length=8, max_special=0, disallowed_chars="1iIlLoO0|")
-        endusername = f"user{str(i).zfill(3)}@impact2025.com"
+        endusername = f"enduser{str(i).zfill(3)}@impact2025.com"
         endpassword = generate_unique_password(length=8, max_special=0, disallowed_chars="1iIlLoO0|")
 
         # Log variables to CSV
@@ -51,12 +51,12 @@ with open("identity_out.csv", mode="w", newline="") as csvfile:
 
         # Create organization, role, and users
         org_id = create_organization(orgpath, f"{orgpath} Organization Description")
-        role_id = create_role("TestRole", orgpath)
+        role_id = create_role(f"Role{str(i).zfill(3)}", orgpath)
         assign_role_adminrights(role_id, "/lib/rights/appman.json")
         assign_role_adminrights(role_id, "/lib/rights/roleman.json")
         admin_uid = new_identity_user(adminusername, adminpassword, orgpath)
         add_user_to_role(admin_uid, role_id)
-        add_user_to_role(admin_uid, "Privilege_Cloud_Users_ID")
+        add_user_to_role(admin_uid, "Privilege_Cloud_Admins_ID")
 
         update_org_admins(org_id, admin_uid)
         end_uid = new_identity_user(endusername, endpassword, orgpath)
