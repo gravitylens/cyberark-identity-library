@@ -31,7 +31,7 @@ password = os.getenv("identitypw")
 app_id = os.getenv("appid")
 new_identity_session(base_url, username, password, app_id)
 print("new_identity_session: Success")
-roleid = create_role("Venafi Impact users", None)
+roleid = create_role("Venafi Users", None)
 
 # Open CSV file for logging
 with open("venafi_out.csv", mode="w", newline="") as csvfile:
