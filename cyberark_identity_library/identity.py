@@ -46,6 +46,16 @@ def new_identity_session(base_url, username, password, app_id):
     return False
 
 def new_identity_user(username, pw, orgpath=None):
+    # Check if user already exists
+    try:
+        uid = get_user(username)
+        if uid:
+            # If user exists, reset their password to the provided pw
+            reset_result = reset_identity_password(uid, pw)
+            return uid
+    except Exception:
+        pass  # If get_user fails, assume user does not exist and continue
+
     uri = f"{url}/CDirectoryService/CreateUser"
 
     body = {
@@ -68,6 +78,11 @@ def new_identity_user(username, pw, orgpath=None):
         result = f"Unable to create {username}"
 
     return result
+
+def get_user(username):
+    result = identity_query(f"SELECT * FROM users WHERE username = '{username}'")
+
+    return result["Results"][0]["Row"]["ID"]
 
 def add_user_to_role(uid, role_id):
     uri = f"{url}/SaasManage/AddUsersAndGroupsToRole"

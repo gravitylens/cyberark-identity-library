@@ -11,6 +11,7 @@ base_url = os.getenv("identityURL")
 username = os.getenv("identityuid")
 password = os.getenv("identitypw")
 app_id = os.getenv("appid")
+suffix="cau-lab-01"
 id.new_identity_session(base_url, username, password, app_id)
 print("new_identity_session: Success")
 
@@ -23,9 +24,9 @@ with open("identity_out.csv", mode="w", newline="") as csvfile:
     # Loop to create a new organization, role, and users
     for i in range(250):
         orgpath = f"Impact{str(i).zfill(3)}"
-        adminusername = f"admin{str(i).zfill(3)}@impact2025.com"
+        adminusername = f"admin{str(i).zfill(3)}@{suffix}"
         adminpassword = id.generate_unique_password(length=8, max_special=0, disallowed_chars="1iIlLoO0|")
-        endusername = f"enduser{str(i).zfill(3)}@impact2025.com"
+        endusername = f"enduser{str(i).zfill(3)}@{suffix}"
         endpassword = id.generate_unique_password(length=8, max_special=0, disallowed_chars="1iIlLoO0|")
 
         # Log variables to CSV
