@@ -4,7 +4,9 @@ This library provides functions to interact with the CyberArk Identity API.
 
 ## Installation
 
-
+```bash
+pip install https://github.com/gravitylens/cyberark-identity-library/releases/download/v0.1.0/cyberark_identity_library-0.1.0-py3-none-any.whl
+```
 
 ## Functions
 
