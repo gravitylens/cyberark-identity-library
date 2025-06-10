@@ -9,6 +9,22 @@ headers = {
     "Content-Type": "application/x-www-form-urlencoded"
 }
 
+
+def _request(method, uri, **kwargs):
+    """Helper to make HTTP requests with basic error handling."""
+    try:
+        response = requests.request(method, uri, headers=headers, **kwargs)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"Request to {uri} failed: {exc}")
+        return {}
+
+    try:
+        return response.json()
+    except ValueError:
+        print(f"Invalid JSON response from {uri}")
+        return {}
+
 def new_identity_session(base_url, username, password, app_id):
     global url
     url = base_url
@@ -21,9 +37,13 @@ def new_identity_session(base_url, username, password, app_id):
 
     body = "grant_type=client_credentials&scope=all"
 
-    response = requests.post(uri, headers=headers, data=body)
-    access_token = response.json()["access_token"]
-    headers["Authorization"] = f"Bearer {access_token}"
+    data = _request("post", uri, data=body)
+    access_token = data.get("access_token")
+    if access_token:
+        headers["Authorization"] = f"Bearer {access_token}"
+        return True
+    print("Failed to obtain access token")
+    return False
 
 def new_identity_user(username, pw, orgpath=None):
     uri = f"{url}/CDirectoryService/CreateUser"
@@ -40,10 +60,10 @@ def new_identity_user(username, pw, orgpath=None):
         "OrgPath": orgpath
     }
 
-    response = requests.post(uri, headers=headers, json=body)
-    
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri, json=body)
+
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = f"Unable to create {username}"
 
@@ -57,13 +77,10 @@ def add_user_to_role(uid, role_id):
         "Users": [uid]
     }
 
-    try:
-        response = requests.post(uri, headers=headers, json=body)
-    except Exception as e:
+    data = _request("post", uri, json=body)
+    if not data:
         print(f"Unable to add {uid} to {role_id}")
-        return
-
-    return response.json()
+    return data
 
 def set_additional_attribute(uid, attribute, value):
     uri = f"{url}/ExtData/SetColumns"
@@ -76,14 +93,12 @@ def set_additional_attribute(uid, attribute, value):
         }
     }
 
-    response = requests.post(uri, headers=headers, json=body)
-    return response.json()
+    return _request("post", uri, json=body)
 
 def remove_identity_user(uid):
     global url
     uri = f"{url}/UserMgmt/RemoveUser?ID={uid}"
-    response = requests.post(uri, headers=headers)
-    #return response.json()
+    return _request("post", uri)
 
 def reset_identity_password(uid, new_password):
     uri = f"{url}/UserMgmt/ResetUserPassword"
@@ -93,9 +108,9 @@ def reset_identity_password(uid, new_password):
         "newPassword": new_password
     }
 
-    response = requests.post(uri, headers=headers, json=body)
+    data = _request("post", uri, json=body)
 
-    if response.json()["success"]:
+    if data.get("success"):
         result = "Password Reset"
     else:
         result = f"Unable to Reset Password for {uid}"
@@ -110,14 +125,16 @@ def create_organization(org_name, org_desc=None):
         "Description": org_desc
     }
 
-    response = requests.post(uri, headers=headers, json=body)
-    
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri, json=body)
+
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = f"Unable to create organization {org_name}"
 
-    return result['ID']
+    if isinstance(result, dict):
+        return result.get('ID')
+    return result
 
 def delete_organization(org_id):
     uri = f"{url}/Org/Delete"
@@ -126,9 +143,9 @@ def delete_organization(org_id):
         "OrgId": org_id
     }
 
-    response = requests.post(uri, headers=headers, json=body)
-    
-    if response.json()["success"]:
+    data = _request("post", uri, json=body)
+
+    if data.get("success"):
         result = f"Organization {org_id} deleted successfully"
     else:
         result = f"Unable to delete organization {org_id}"
@@ -142,10 +159,10 @@ def get_organization(org_id):
         "OrgId": org_id
     }
 
-    response = requests.get(uri, headers=headers, json=body)
-    
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("get", uri, json=body)
+
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = f"Unable to retrieve organization {org_id}"
 
@@ -153,9 +170,9 @@ def get_organization(org_id):
 
 def get_organizations():
     uri = f"{url}/Org/ListAll"
-    response = requests.get(uri, headers=headers)
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("get", uri)
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = "Unable to retrieve organizations"
     return result
@@ -165,9 +182,9 @@ def get_organization_roles(org_id):
     body = {
         "OrgId": org_id
     }
-    response = requests.post(uri, headers=headers, json=body)
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri, json=body)
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = "Unable to retrieve roles"
     return result
@@ -183,9 +200,9 @@ def update_org_admins(org_id, uid):
         ],
         "OrgId": org_id
     }
-    response = requests.post(uri, headers=headers, json=body)
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri, json=body)
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = "Unable to update org admins"
     return result
@@ -200,14 +217,16 @@ def create_role(role_name, orgpath):
         "OrgPath": orgpath,
     }
 
-    response = requests.post(uri, headers=headers, json=body)
-    
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri, json=body)
+
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = f"Unable to create role {role_name}"
 
-    return result["_RowKey"]
+    if isinstance(result, dict):
+        return result.get("_RowKey")
+    return result
 
 def assign_role_adminrights(role_id, path):
     uri = f"{url}/Roles/AssignSuperRights"
@@ -215,20 +234,20 @@ def assign_role_adminrights(role_id, path):
         "Role": role_id,
         "Path": path
     }]
-    response = requests.post(uri, headers=headers, json=body)
-    if response.json()["success"]:
+    data = _request("post", uri, json=body)
+    if data.get("success"):
         print(f"Role {role_id} assigned admin rights to {path}")
     else:
         print(f"Unable to assign admin rights to {role_id} for {path}")
-    return response.json()
+    return data
 
 def get_role(role_id):
     uri = f"{url}/Roles/GetRole?Name={role_id}"
 
-    response = requests.post(uri, headers=headers)
-    
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri)
+
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = "Unable to retrieve roles"
 
@@ -241,10 +260,10 @@ def identity_query(script):
         "Script": script
     }
 
-    response = requests.post(uri, headers=headers, json=body)
-    
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    data = _request("post", uri, json=body)
+
+    if data.get("success"):
+        result = data.get("Result")
     else:
         result = "Unable to retrieve query results"
 
