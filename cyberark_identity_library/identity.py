@@ -250,21 +250,34 @@ def identity_query(script):
 
     return result
 
-def generate_unique_password(length=12, min_lowercase=2, max_lowercase=None, min_uppercase=2, max_uppercase=None, min_special=0, max_special=None, disallowed_chars=""):
+def generate_unique_password(
+    length=12,
+    min_lowercase=2,
+    max_lowercase=None,
+    min_uppercase=2,
+    max_uppercase=None,
+    min_digits=2,
+    max_digits=None,
+    min_special=0,
+    max_special=None,
+    disallowed_chars=""
+):
     """
     Generates a unique password with a mix of letters, digits, and special characters.
-    
+
     :param length: Length of the password (default is 12)
     :param min_lowercase: Minimum number of lowercase letters (default is 2)
     :param max_lowercase: Maximum number of lowercase letters (default is None, no limit)
     :param min_uppercase: Minimum number of uppercase letters (default is 2)
     :param max_uppercase: Maximum number of uppercase letters (default is None, no limit)
+    :param min_digits: Minimum number of digits (default is 2)
+    :param max_digits: Maximum number of digits (default is None, no limit)
     :param min_special: Minimum number of special characters (default is 0)
     :param max_special: Maximum number of special characters (default is None, no limit)
     :param disallowed_chars: A string of characters that should not be included in the password
     :return: A unique password string
     """
-    if length < (min_lowercase + min_uppercase + min_special):
+    if length < (min_lowercase + min_uppercase + min_digits + min_special):
         raise ValueError("Password length must be at least the sum of minimum character requirements")
 
     # Define allowed character sets
@@ -274,12 +287,13 @@ def generate_unique_password(length=12, min_lowercase=2, max_lowercase=None, min
     allowed_digits = ''.join(c for c in string.digits if c not in disallowed_chars)
     allowed_remaining = ''.join(c for c in (string.ascii_letters + string.digits) if c not in disallowed_chars)
 
-    if not (allowed_lowercase and allowed_uppercase and allowed_remaining):
+    if not (allowed_lowercase and allowed_uppercase and allowed_digits and allowed_remaining):
         raise ValueError("Disallowed characters exclude all possible characters for password generation")
 
     # Generate required characters
     lowercase = ''.join(secrets.choice(allowed_lowercase) for _ in range(min_lowercase)) if max_lowercase != 0 else ''
     uppercase = ''.join(secrets.choice(allowed_uppercase) for _ in range(min_uppercase)) if max_uppercase != 0 else ''
+    digits = ''.join(secrets.choice(allowed_digits) for _ in range(min_digits)) if max_digits != 0 else ''
     special = ''.join(secrets.choice(allowed_special) for _ in range(min_special)) if max_special != 0 else ''
 
     # Apply maximum limits if specified
@@ -287,14 +301,36 @@ def generate_unique_password(length=12, min_lowercase=2, max_lowercase=None, min
         lowercase = lowercase[:max_lowercase]
     if max_uppercase is not None:
         uppercase = uppercase[:max_uppercase]
-    elif max_special is not None:
+    if max_digits is not None:
+        digits = digits[:max_digits]
+    if max_special is not None:
         special = special[:max_special]
 
-    # Adjust remaining characters to exclude special characters if max_special is 0
-    remaining_length = length - len(lowercase) - len(uppercase) - len(special)
+    # Adjust remaining characters
+    remaining_length = length - len(lowercase) - len(uppercase) - len(digits) - len(special)
     remaining = ''.join(secrets.choice(allowed_remaining) for _ in range(remaining_length))
 
     # Combine and shuffle
-    password = list(lowercase + uppercase + special + remaining)
+    password = list(lowercase + uppercase + digits + special + remaining)
     secrets.SystemRandom().shuffle(password)
     return ''.join(password)
+
+__all__ = [
+    "new_identity_session",
+    "new_identity_user",
+    "add_user_to_role",
+    "set_additional_attribute",
+    "remove_identity_user",
+    "reset_identity_password",
+    "create_organization",
+    "delete_organization",
+    "get_organization",
+    "get_organizations",
+    "get_organization_roles",
+    "update_org_admins",
+    "create_role",
+    "assign_role_adminrights",
+    "get_role",
+    "identity_query",
+    "generate_unique_password",
+]

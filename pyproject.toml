@@ -16,8 +16,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "requests",
-    "python-dotenv"
+    "requests"
 ]
 
 [project.urls]
