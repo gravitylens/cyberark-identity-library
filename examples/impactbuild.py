@@ -1,5 +1,5 @@
 import os
-from identity import (
+from cyberark_identity_library.identity import (
     new_identity_session,
     new_identity_user,
     add_user_to_role,
