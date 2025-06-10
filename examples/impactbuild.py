@@ -61,4 +61,7 @@ with open("identity_out.csv", mode="w", newline="") as csvfile:
         update_org_admins(org_id, admin_uid)
         end_uid = new_identity_user(endusername, endpassword, orgpath)
         add_user_to_role(end_uid, "Privilege_Cloud_Users_ID")
+
+        #TODO: Add user to SWS Role
+        
         time.sleep(2)
