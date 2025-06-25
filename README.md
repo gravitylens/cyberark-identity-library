@@ -5,7 +5,7 @@ This library provides functions to interact with the CyberArk Identity API.
 ## Installation
 Install the library
 ```bash
-pip install https://github.com/gravitylens/cyberark-identity-library/releases/download/v0.1.1/cyberark_identity_library-0.1.1-py3-none-any.whl
+pip install https://github.com/gravitylens/skytap-python/releases/download/v0.1.1-alpha/skytap-0.1.1-py3-none-any.whl
 ```
 
 Import the library in your code and sign in
