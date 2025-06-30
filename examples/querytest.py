@@ -14,6 +14,6 @@ app_id = os.getenv("appid")
 id.new_identity_session(base_url, username, password, app_id)
 print("new_identity_session: Success")
 
-result = id.identity_query("SELECT * FROM users WHERE username = 'jason.niles@cau-lab-01'")
+result = id.identity_query("SELECT * FROM orgs")
 
-print(result["Results"][0]["Row"]["ID"])
+print(result)
