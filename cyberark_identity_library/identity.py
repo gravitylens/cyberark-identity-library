@@ -80,7 +80,7 @@ def new_identity_user(username, pw, orgpath=None):
     return result
 
 def get_user(username):
-    result = identity_query(f"SELECT * FROM users WHERE username = '{username}'")
+    result = identity_query(f"SELECT * FROM users WHERE DisplayName = '{username}'")
 
     return result["Results"][0]["Row"]["ID"]
 
