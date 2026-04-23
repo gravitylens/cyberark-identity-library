@@ -49,21 +49,136 @@ def new_identity_user(username, pw, orgpath=None):
 
     return result
 
-def add_user_to_role(uid, role_id):
-    uri = f"{url}/SaasManage/AddUsersAndGroupsToRole"
-
-    body = {
-        "Name": role_id,
-        "Users": [uid]
-    }
-
+def add_user_to_role(username, role_name):
+    """
+    Add a user to a role by username and role name (with automatic ID lookup)
+    
+    Args:
+        username (str): Username, email, or display name of the user
+        role_name (str): Name of the role
+    
+    Returns:
+        dict: Result with success status and details, or error information
+        
+    Examples:
+        # Add user to role by name
+        result = add_user_to_role("user@domain.com", "System Administrator")
+        
+        # Check result
+        if result.get("success"):
+            print("User added successfully!")
+        else:
+            print(f"Failed: {result.get('error_message')}")
+    """
+    
+    # Step 1: Look up user ID
+    user_id = None
+    user_display_name = None
+    
+    # Try different user lookup methods
+    user_queries = [
+        f"SELECT * FROM User WHERE DisplayName = '{username}'",
+        f"SELECT * FROM User WHERE Username = '{username}'", 
+        f"SELECT * FROM User WHERE Email = '{username}'"
+    ]
+    
+    for query in user_queries:
+        try:
+            user_result = identity_query(query)
+            if user_result and not user_result.get('error'):
+                results = user_result.get('Results', [])
+                if results:
+                    user_data = results[0]['Row']
+                    user_id = user_data.get('ID')
+                    user_display_name = user_data.get('DisplayName') or user_data.get('Username')
+                    break
+        except Exception as e:
+            continue  # Try next query format
+    
+    if not user_id:
+        return {
+            "success": False,
+            "error_type": "user_not_found", 
+            "error_message": f"User '{username}' not found",
+            "details": "User lookup failed with DisplayName, Username, and Email queries"
+        }
+    
+    # Step 2: Look up role ID
+    role_id = None
+    role_display_name = None
+    
     try:
-        response = requests.post(uri, headers=headers, json=body)
+        role_query = f"SELECT * FROM Role WHERE Name = '{role_name}'"
+        role_result = identity_query(role_query)
+        
+        if role_result and not role_result.get('error'):
+            results = role_result.get('Results', [])
+            if results:
+                role_data = results[0]['Row']
+                role_id = role_data.get('ID')
+                role_display_name = role_data.get('Name')
+        
+        if not role_id:
+            return {
+                "success": False,
+                "error_type": "role_not_found",
+                "error_message": f"Role '{role_name}' not found", 
+                "details": f"Role query returned no results for name '{role_name}'"
+            }
+            
     except Exception as e:
-        print(f"Unable to add {uid} to {role_id}")
-        return
-
-    return response.json()
+        return {
+            "success": False,
+            "error_type": "role_query_failed",
+            "error_message": f"Failed to query role '{role_name}': {str(e)}",
+            "details": "Exception occurred during role lookup"
+        }
+    
+    # Step 3: Perform the assignment
+    try:
+        uri = f"{url}/SaasManage/AddUsersAndGroupsToRole"
+        
+        body = {
+            "Name": role_id,
+            "Users": [user_id]
+        }
+        
+        response = requests.post(uri, headers=headers, json=body)
+        assignment_result = response.json()
+        
+        # Enhance the result with our lookup information
+        if assignment_result.get("success"):
+            return {
+                "success": True,
+                "message": f"Successfully added user '{user_display_name}' to role '{role_display_name}'",
+                "user_id": user_id,
+                "user_name": user_display_name,
+                "role_id": role_id, 
+                "role_name": role_display_name,
+                "api_response": assignment_result
+            }
+        else:
+            return {
+                "success": False,
+                "error_type": "assignment_failed",
+                "error_message": assignment_result.get("Message", "Assignment API call failed"),
+                "user_id": user_id,
+                "user_name": user_display_name,
+                "role_id": role_id,
+                "role_name": role_display_name,
+                "api_response": assignment_result
+            }
+            
+    except Exception as e:
+        return {
+            "success": False,
+            "error_type": "api_exception", 
+            "error_message": f"Assignment API call failed: {str(e)}",
+            "user_id": user_id,
+            "user_name": user_display_name,
+            "role_id": role_id,
+            "role_name": role_display_name
+        }
 
 def set_additional_attribute(uid, attribute, value):
     uri = f"{url}/ExtData/SetColumns"
@@ -234,21 +349,51 @@ def get_role(role_id):
 
     return result
 
-def identity_query(script):
-    uri= f"{url}/Redrock/query"
+def identity_query(script, page_number=1, page_size=100, limit=100000, sort_by="", caching=-1):
+    """
+    Execute a RedRock query against the CyberArk Identity database
+    
+    Args:
+        script (str): SQL query to execute
+        page_number (int): Page number for pagination (default: 1)
+        page_size (int): Number of records per page (default: 100) 
+        limit (int): Maximum total records (default: 100000)
+        sort_by (str): Sort field (default: "")
+        caching (int): Caching setting (default: -1)
+    
+    Returns:
+        dict: Query result with Results, Count, Columns, etc. or error message
+    
+    Examples:
+        # Query users
+        result = identity_query("SELECT * FROM User WHERE DisplayName LIKE '%john%'")
+        
+        # Query roles
+        result = identity_query("SELECT * FROM Role WHERE Name = 'EPM_80003'")
+    """
+    uri = f"{url}/RedRock/query"
 
     body = {
-        "Script": script
+        "Script": script,
+        "Args": {
+            "PageNumber": page_number,
+            "PageSize": page_size,
+            "Limit": limit,
+            "SortBy": sort_by,
+            "Caching": caching
+        }
     }
 
     response = requests.post(uri, headers=headers, json=body)
     
-    if response.json()["success"]:
-        result = response.json()["Result"]
+    if response.status_code == 200:
+        json_response = response.json()
+        if json_response.get("success"):
+            return json_response.get("Result")
+        else:
+            return {"error": True, "message": json_response.get("Message", "Unknown error")}
     else:
-        result = "Unable to retrieve query results"
-
-    return result
+        return {"error": True, "message": f"HTTP {response.status_code}: {response.text}"}
 
 def generate_unique_password(
     length=12,
