@@ -9,6 +9,21 @@ headers = {
     "Content-Type": "application/x-www-form-urlencoded"
 }
 
+def _request(method, uri, **kwargs):
+    """Helper to make HTTP requests with basic error handling."""
+    try:
+        response = requests.request(method, uri, headers=headers, **kwargs)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"Request to {uri} failed: {exc}")
+        return {}
+
+    try:
+        return response.json()
+    except ValueError:
+        print(f"Invalid JSON response from {uri}")
+        return {}
+
 def new_identity_session(base_url, username, password, app_id):
     global url
     url = base_url
@@ -48,6 +63,34 @@ def new_identity_user(username, pw, orgpath=None):
         result = f"Unable to create {username}"
 
     return result
+
+def get_user(username):
+    """
+    Get user ID by username (helper function)
+    
+    Args:
+        username (str): Username, email, or display name
+        
+    Returns:
+        str: User ID if found, None otherwise
+    """
+    user_queries = [
+        f"SELECT * FROM User WHERE DisplayName = '{username}'",
+        f"SELECT * FROM User WHERE Username = '{username}'",
+        f"SELECT * FROM User WHERE Email = '{username}'"
+    ]
+    
+    for query in user_queries:
+        try:
+            result = identity_query(query)
+            if result and not result.get('error'):
+                results = result.get('Results', [])
+                if results:
+                    return results[0]['Row']['ID']
+        except:
+            continue
+    
+    return None
 
 def add_user_to_role(username, role_name):
     """
